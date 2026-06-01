@@ -18,11 +18,26 @@ import {
 const AppLayout = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 768);
+
+  // Dynamically update sidebar state on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsSidebarOpen(true);
+      } else {
+        setIsSidebarOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Automatically close sidebar when navigation path changes on mobile
   useEffect(() => {
-    setIsSidebarOpen(false);
+    if (window.innerWidth < 768) {
+      setIsSidebarOpen(false);
+    }
   }, [location.pathname]);
 
   const navItems = [
@@ -43,9 +58,9 @@ const AppLayout = () => {
         />
       )}
 
-      {/* Sidebar - Collapsible drawer on mobile, static on desktop */}
+      {/* Sidebar - Collapsible drawer on mobile & desktop */}
       <aside 
-        className={`fixed inset-y-0 left-0 z-30 w-64 border-r border-[#f3eae0] flex flex-col bg-white/95 md:bg-white/80 backdrop-blur-md transition-transform duration-300 ease-in-out md:translate-x-0 md:static ${
+        className={`fixed inset-y-0 left-0 z-30 w-64 border-r border-[#f3eae0] flex flex-col bg-white/95 md:bg-white/80 backdrop-blur-md transition-transform duration-300 ease-in-out ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -99,14 +114,18 @@ const AppLayout = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-grow flex flex-col overflow-hidden">
+      <main 
+        className={`flex-grow flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${
+          isSidebarOpen ? 'md:ml-64' : 'md:ml-0'
+        }`}
+      >
         {/* Header - Structured like screenshots */}
         <header className="h-20 border-b border-[#f3eae0] bg-white/60 backdrop-blur-md flex items-center justify-between px-4 md:px-8 z-10">
           <div className="flex items-center space-x-3 flex-grow md:flex-grow-0">
             <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="p-2 -ml-1 text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100/50 rounded-xl md:hidden transition-colors focus:outline-none"
-              aria-label="Open sidebar"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-2 -ml-1 text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100/50 rounded-xl transition-colors focus:outline-none"
+              aria-label="Toggle sidebar"
             >
               <Menu size={22} />
             </button>
